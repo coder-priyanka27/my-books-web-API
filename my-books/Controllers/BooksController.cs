@@ -12,7 +12,7 @@ namespace my_books.Controllers
         public BooksService _booksService;
         public BooksController(BooksService booksService)
         {
-                _booksService = booksService;
+            _booksService = booksService;
         }
 
         [HttpGet("get-all-books")]
@@ -34,6 +34,12 @@ namespace my_books.Controllers
         {
             _booksService.AddBook(book);
             return Ok();
+        }
+        [HttpPut("update-book-by-id/{id}")]
+        public IActionResult UpdateBookById(int id, [FromBody] BookViewModel book)
+        {
+            var updatedBook = _booksService.UpdateBookById(id, book);
+            return Ok(updatedBook);
         }
     }
 }
