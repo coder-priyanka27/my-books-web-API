@@ -24,17 +24,17 @@ namespace my_books.Data.Services
                 Rate = book.IsRead ? book.Rate.Value : null,
                 CoverUrl = book.CoverUrl,
                 DateAdded = DateTime.Now,
-                PublisherId = book.PublisherId
+                //PublisherId = book.PublisherId
             };
             _context.Books.Add(_book);
             _context.SaveChanges();
 
-            foreach (var id in book.AuthorIds)
+            foreach (var id in book.AuthorNames)
             {
                 var _book_author = new Book_Author()
                 {
                     BookId = _book.Id,
-                    AuthorId = id
+                    AuthorId = int.Parse(id)
                 };
                 _context.Book_Authors.Add(_book_author);
                 _context.SaveChanges();
@@ -43,7 +43,23 @@ namespace my_books.Data.Services
 
         public List<Book> GetAllBooks() => _context.Books.ToList();
 
-        public Book GetBookById(int bookId) => _context.Books.FirstOrDefault(n => n.Id == bookId);
+        public BookViewModel GetBookById(int bookId)
+        {
+            var _bookWithAuthors = _context.Books.Where(n => n.Id == bookId).Select(book => new BookViewModel()
+            {
+                Title = book.Title,
+                Description = book.Description,
+                IsRead = book.IsRead,
+                DateRead = book.IsRead ? book.DateRead : null,
+                Genre = book.Genre,
+                Rate = book.IsRead ? book.Rate.Value : null,
+                CoverUrl = book.CoverUrl,
+                PublisherName = book.Publisher.Name,
+                AuthorNames = book.Book_Authors.Select(n => n.Author.FullName).ToList()
+            }).FirstOrDefault();
+
+            return _bookWithAuthors;
+        }
 
         public Book UpdateBookById(int bookId, BookViewModel book)
         {

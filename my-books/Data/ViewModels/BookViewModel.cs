@@ -12,7 +12,7 @@ namespace my_books.Data.ViewModels
         public int? Rate { get; set; }
         public string CoverUrl { get; set; }
 
-        public int PublisherId { get; set; }
-        public List<int> AuthorIds { get; set; }
+        public string PublisherName { get; set; }
+        public List<string> AuthorNames { get; set; }
     }
 }
