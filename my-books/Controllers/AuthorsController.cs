@@ -12,7 +12,7 @@ namespace my_books.Controllers
         private AuthorsService _authorsService;
         public AuthorsController(AuthorsService authorsService)
         {
-                _authorsService = authorsService;
+            _authorsService = authorsService;
         }
 
         [HttpPost("add-author")]
@@ -20,6 +20,13 @@ namespace my_books.Controllers
         {
             _authorsService.AddAuthor(author);
             return Ok();
+        }
+
+        [HttpGet("get-author-with-books-by-id/{id}")]
+        public IActionResult GetAuthorWithBooksById(int id)
+        {
+            var _author = _authorsService.GetAuthorWithBooks(id);
+            return Ok(_author);
         }
     }
 }
