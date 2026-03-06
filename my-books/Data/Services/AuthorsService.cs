@@ -21,13 +21,13 @@ namespace my_books.Data.Services
         }
         public AuthorWithBooksViewModel GetAuthorWithBooks(int authorId)
         {
-            var author = _context.Authors.Where(n => n.Id == authorId).Select(n => new AuthorWithBooksViewModel()
+            var _author = _context.Authors.Where(n => n.Id == authorId).Select(n => new AuthorWithBooksViewModel()
             {
                 FullName = n.FullName,
                 BookTitles = n.Book_Authors.Select(n => n.Book.Title).ToList()
             }).FirstOrDefault();
 
-            return author;
+            return _author;
         }
     }
 }
