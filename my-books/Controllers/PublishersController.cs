@@ -17,14 +17,22 @@ namespace my_books.Controllers
         [HttpPost("add-publisher")]
         public IActionResult AddPublisher([FromBody] PublisherViewModel publisher)
         {
-            _publishersService.AddPublisher(publisher);
-            return Ok();
+            var newPublisher = _publishersService.AddPublisher(publisher);
+            return Created(nameof(AddPublisher), newPublisher);
         }
-        [HttpGet("get-publisher-books-with-authors/{id}")]
-        public IActionResult GetPublisherData(int id)
+        [HttpGet("get-publisher-bt-id/{id}")]
+        public IActionResult GetPublisherById(int id)
         {
-            var _publisherData = _publishersService.GetPublisherData(id);
-            return Ok(_publisherData);
+            var _publisherData = _publishersService.GetPublisherById(id);
+
+            if (_publisherData != null)
+            {
+                return Ok(_publisherData);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [HttpDelete("delete-publisher-by-id/{id}")]
