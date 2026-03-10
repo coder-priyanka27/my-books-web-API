@@ -34,6 +34,7 @@ app.UseAuthorization();
 
 // Exception Handling
 app.ConfigureBuildInExceptionHandler();
+//app.ConfigureCustomExceptionHandler();
 
 app.MapControllers();
 
