@@ -1,4 +1,5 @@
-﻿using my_books.Data.Models;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using my_books.Data.Models;
 using my_books.Data.ViewModels;
 using my_books.Exceptions;
 using System.Text.RegularExpressions;
@@ -12,6 +13,8 @@ namespace my_books.Data.Services
         {
             _context = context;
         }
+        public List<Publisher> GetAllPublishers() => _context.Publishers.ToList();
+
         public Publisher AddPublisher(PublisherViewModel publisher)
         {
             if (StringStartsWithNumber(publisher.Name))
