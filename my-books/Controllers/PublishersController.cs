@@ -32,7 +32,7 @@ namespace my_books.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("get-publisher-bt-id/{id}")]
+        [HttpGet("get-publisher-by-id/{id}")]
         public IActionResult GetPublisherById(int id)
         {
             var _publisherData = _publishersService.GetPublisherById(id);
