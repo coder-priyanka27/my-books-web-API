@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using my_books.Data.Models;
+using my_books.Data.Paging;
 using my_books.Data.ViewModels;
 using my_books.Exceptions;
 using System.Text.RegularExpressions;
@@ -13,10 +14,11 @@ namespace my_books.Data.Services
         {
             _context = context;
         }
-        public List<Publisher> GetAllPublishers(string sortBy, string searchString)
+        public List<Publisher> GetAllPublishers(string sortBy, string searchString, int? pageNumber)
         {
             var allPublishers = _context.Publishers.OrderBy(n => n.Name).ToList();
 
+            // Sorting
             if (!string.IsNullOrEmpty(sortBy))
             {
                 switch(sortBy)
@@ -28,11 +30,15 @@ namespace my_books.Data.Services
                         break;
                 }
             }
-
-            if(!string.IsNullOrEmpty(searchString))
+            // Filtering
+            if (!string.IsNullOrEmpty(searchString))
             {
                 allPublishers = allPublishers.Where(n => n.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
             }
+
+            // Paging
+            int pageSize = 5;
+            allPublishers = PaginatedList<Publisher>.Create(allPublishers.AsQueryable(), pageNumber ?? 1, pageSize);
             return allPublishers;
         }
 
