@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using my_books.Data;
 using my_books.Data.Services;
@@ -18,6 +19,8 @@ builder.Services.AddApiVersioning(config =>
 {
     config.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
     config.AssumeDefaultVersionWhenUnspecified = true;
+
+    config.ApiVersionReader = new HeaderApiVersionReader("custom-version-header");
 });
 
 builder.Services.AddControllers();
