@@ -14,6 +14,8 @@ builder.Services.AddTransient<BooksService>();
 builder.Services.AddTransient<AuthorsService>();
 builder.Services.AddTransient<PublishersService>();
 
+builder.Services.AddApiVersioning();
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
