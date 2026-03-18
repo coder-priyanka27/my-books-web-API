@@ -19,7 +19,12 @@ finally
 {
 	Log.CloseAndFlush();
 }
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();
 
+builder.Host.UseSerilog(); // VERY IMPORTANT
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -59,8 +64,11 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 // Exception Handling
-app.ConfigureBuildInExceptionHandler();
+//app.ConfigureBuildInExceptionHandler();
 //app.ConfigureCustomExceptionHandler();
+
+// Logging Example
+app.Logger.LogInformation("Application Started Successfully");
 
 app.MapControllers();
 

@@ -14,32 +14,32 @@ namespace my_books.Data.Services
         {
             _context = context;
         }
-        public List<Publisher> GetAllPublishers(string sortBy, string searchString, int? pageNumber)
+        public List<Publisher> GetAllPublishers()
         
         {
             var allPublishers = _context.Publishers.OrderBy(n => n.Name).ToList();
 
             // Sorting
-            if (!string.IsNullOrEmpty(sortBy))
+            //if (!string.IsNullOrEmpty())
             {
-                switch(sortBy)
-                {
-                    case "name_desc":
+                //switch()
+                //{
+                    //case "name_desc":
                         allPublishers = allPublishers.OrderByDescending(n => n.Name).ToList();
-                        break;
-                    default:    
-                        break;
-                }
+                        //break;
+                    //default:    
+                        //break;
+                //}
             }
             // Filtering
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                allPublishers = allPublishers.Where(n => n.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
-            }
+            //if (!string.IsNullOrEmpty())
+            //{
+            //    allPublishers = allPublishers.Where(n => n.Name.Contains.ToList();
+            //}
 
             // Paging
-            int pageSize = 5;
-            allPublishers = PaginatedList<Publisher>.Create(allPublishers.AsQueryable(), pageNumber ?? 1, pageSize);
+            //int pageSize = 5;
+            //allPublishers = PaginatedList<Publisher>.Create(allPublishers.AsQueryable(), pageNumber ?? 1, pageSize);
             return allPublishers;
         }
 
