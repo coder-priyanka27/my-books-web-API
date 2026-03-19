@@ -34,6 +34,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddTransient<BooksService>();
 builder.Services.AddTransient<AuthorsService>();
 builder.Services.AddTransient<PublishersService>();
+builder.Services.AddTransient<LogsService>();
 
 builder.Services.AddApiVersioning(config =>
 {

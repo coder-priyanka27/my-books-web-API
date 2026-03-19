@@ -21,7 +21,6 @@ namespace my_books.Controllers
         [HttpGet("get-all-publishers")]
         public IActionResult GetAllPublishers()
         {
-            throw new Exception("This is an exception from the GetAllPublishers method");
             try
             {
                 _logger.LogInformation("This is just a log in the GetAllPublishers method");
