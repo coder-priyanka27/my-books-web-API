@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using my_books.Data;
 using my_books.Data.Models;
+using my_books.Data.Services;
 
 namespace my_books_tests
 {
@@ -11,6 +12,7 @@ namespace my_books_tests
             .Options;
 
         AppDbContext context;
+        PublishersService publishersService;
 
         [OneTimeSetUp]
         public void Setup()
@@ -19,6 +21,41 @@ namespace my_books_tests
             context.Database.EnsureCreated();
 
             SeedDatabase();
+
+            publishersService = new PublishersService(context);
+        }
+
+        [Test, Order(1)]
+        public void GetAllPublishers_WithNoSortBy_WithNoSearchString_WithNoPageNumber()
+        {
+            var result = publishersService.GetAllPublishers("", "", null);
+
+            Assert.That(result.Count, Is.EqualTo(5));
+        }
+        [Test, Order(2)]
+        public void GetAllPublishers_WithNoSortBy_WithNoSearchString_WithPageNumber()
+        {
+            var result = publishersService.GetAllPublishers("", "", 2);
+
+            Assert.That(result.Count, Is.EqualTo(1));
+        }
+
+        [Test, Order(3)]
+        public void GetAllPublishers_WithNoSortBy_WithSearchString_WithNoPageNumber()
+        {
+            var result = publishersService.GetAllPublishers("", "3", null);
+
+            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result.FirstOrDefault().Name, Is.EqualTo("Publisher 3"));
+        }
+
+        [Test, Order(4)]
+        public void GetAllPublishers_WithSortBy_WithNoSearchString_WithNoPageNumber()
+        {
+            var result = publishersService.GetAllPublishers("name_desc", "", null);
+
+            Assert.That(result.Count, Is.EqualTo(5));
+            Assert.That(result.FirstOrDefault().Name, Is.EqualTo("Publisher 6"));
         }
 
         [OneTimeTearDown]
@@ -31,9 +68,12 @@ namespace my_books_tests
         {
             var publishers = new List<Publisher>
             {
-                new Publisher() { Id = 1, Name = "Publisher One" },
-                new Publisher() { Id = 2, Name = "Publisher Two" },
-                new Publisher() { Id = 3, Name = "Publisher Three" },
+                new Publisher() { Id = 1, Name = "Publisher 1" },
+                new Publisher() { Id = 2, Name = "Publisher 2" },
+                new Publisher() { Id = 3, Name = "Publisher 3" },
+                new Publisher() { Id = 4, Name = "Publisher 4" },
+                new Publisher() { Id = 5, Name = "Publisher 5" },
+                new Publisher() { Id = 6, Name = "Publisher 6" },
             };
 
             context.Publishers.AddRange(publishers);
