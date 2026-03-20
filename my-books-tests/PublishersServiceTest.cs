@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using my_books.Data;
 using my_books.Data.Models;
 using my_books.Data.Services;
+using my_books.Data.ViewModels;
+using my_books.Exceptions;
 
 namespace my_books_tests
 {
@@ -76,6 +78,30 @@ namespace my_books_tests
             Assert.That(result, Is.Null);
         }
 
+        [Test, Order(7)]
+        public void AddPublisher_WithException_Test()
+        {
+            var newPublisher = new PublisherViewModel()
+            {
+                Name = "123 With Exception"
+            };
+
+            Assert.That(() => publishersService.AddPublisher(newPublisher), Throws.Exception.TypeOf<PublisherNameException>().With.Message.EqualTo("Publisher name cannot start with a number"));
+        }
+
+        [Test, Order(8)]
+        public void AddPublisher_WithoutException_Test()
+        {
+            var newPublisher = new PublisherViewModel()
+            {
+                Name = "Without Exception"
+            };
+
+            var result = publishersService.AddPublisher(newPublisher);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Name, Does.StartWith("Without"));
+            //Assert.That(result.Id, Is.Not.Null);
+        }
         [OneTimeTearDown]
         public void CleanUp()
         {
