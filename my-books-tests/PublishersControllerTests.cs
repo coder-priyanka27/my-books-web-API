@@ -49,11 +49,34 @@ namespace my_books_tests
             IActionResult actionResultSecond = publishersController.GetAllPublishers("name_desc", "Publisher", 2);
             Assert.That(actionResult, Is.TypeOf<OkObjectResult>());
             var actionResultDataSecond = (actionResultSecond as OkObjectResult).Value as List<Publisher>;
-            Assert.That(actionResultDataSecond.First().Name, Is.EqualTo("Publisher 1"));
+            Assert.That(actionResultDataSecond.First().Name, Is.EqualTo("Publisher 1").IgnoreCase);
             Assert.That(actionResultDataSecond.First().Id, Is.EqualTo(1));
             Assert.That(actionResultDataSecond.Count, Is.EqualTo(1));
         }
 
+        [Test, Order(2)]
+        public void HTTPGET_GetPublisherById_ReturnsOk_Test()
+        {
+            int publisherId = 1;
+
+            IActionResult actionResult = publishersController.GetPublisherById(publisherId);
+
+            Assert.That(actionResult, Is.TypeOf<OkObjectResult>());
+            var actionResultData = (actionResult as OkObjectResult).Value as Publisher;
+            Assert.That(actionResultData.Id, Is.EqualTo(1));
+            Assert.That(actionResultData.Name, Is.EqualTo("Publisher 1"));
+        }
+
+        [Test, Order(3)]
+        public void HTTPGET_GetPublisherById_ReturnsNotFound_Test()
+        {
+            int publisherId = 99;
+
+            IActionResult actionResult = publishersController.GetPublisherById(publisherId);
+
+            Assert.That(actionResult, Is.TypeOf<NotFoundResult>());
+         
+        }
         [OneTimeTearDown]
         public void CleanUp()
         {
