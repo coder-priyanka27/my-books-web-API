@@ -5,6 +5,7 @@ using my_books.Controllers;
 using my_books.Data;
 using my_books.Data.Models;
 using my_books.Data.Services;
+using my_books.Data.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -76,6 +77,30 @@ namespace my_books_tests
 
             Assert.That(actionResult, Is.TypeOf<NotFoundResult>());
          
+        }
+
+        [Test, Order(4)]
+        public void HTTPPOST_AddPublisher_ReturnsCreated_Test()
+        {
+            var newPublisherViewModel = new PublisherViewModel()
+            {
+                Name = "New Publisher"
+            };
+
+            IActionResult actionResult = publishersController.AddPublisher(newPublisherViewModel);
+            Assert.That(actionResult, Is.TypeOf<CreatedResult>());
+        }
+
+        [Test, Order(5)]
+        public void HTTPPOST_AddPublisher_ReturnsBadRequest_Test()
+        {
+            var newPublisherViewModel = new PublisherViewModel()
+            {
+                Name = "123 New Publisher"
+            };
+
+            IActionResult actionResult = publishersController.AddPublisher(newPublisherViewModel);
+            Assert.That(actionResult, Is.TypeOf<BadRequestObjectResult>());
         }
         [OneTimeTearDown]
         public void CleanUp()
