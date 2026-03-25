@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using my_books.Data;
 using my_books.Data.Services;
-using my_books.Exceptions;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +17,7 @@ try
 }
 finally
 {
-	Log.CloseAndFlush();
+    Log.CloseAndFlush();
 }
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -29,6 +29,9 @@ builder.Host.UseSerilog(); // VERY IMPORTANT
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 
 // Configure the Services
 builder.Services.AddTransient<BooksService>();
