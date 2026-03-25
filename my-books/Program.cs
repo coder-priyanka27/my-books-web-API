@@ -56,6 +56,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Access configuration
+var _configuration = builder.Configuration;
+
 //Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
@@ -76,11 +79,11 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters()
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JWT:Secret"])),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"])),
         ValidateIssuer = true,
-        ValidIssuer = Configuration["JWT:Issuer"],
+        ValidIssuer = _configuration["JWT:Issuer"],
         ValidateAudience = true,
-        ValidAudience = Configuration["JWT:Audience"],
+        ValidAudience = _configuration["JWT:Audience"],
     };
 });
 
