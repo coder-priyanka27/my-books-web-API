@@ -1,7 +1,10 @@
-﻿namespace my_books.Data.Models
+﻿using Serilog.Core;
+
+namespace my_books.Data.Models
 {
     public class Log
     {
+        public static Logger Logger { get; internal set; }
         public int Id { get; set; }
         public string Message { get; set; }
         public string MessageTemplate { get; set; }
