@@ -31,6 +31,11 @@ namespace my_books.Controllers
         [HttpPost("register-user")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel payload)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Please, provide all required fields");
+            }
+
             var userExists = await _userManager.FindByEmailAsync(payload.Email);
 
             if (userExists != null)
@@ -52,6 +57,24 @@ namespace my_books.Controllers
                 return BadRequest("User Could not be created");
             }
             return Created(nameof(Register), $"User {payload.Email} Created");
+        }
+
+        [HttpPost("login-user")]
+        public async Task<IActionResult> Login([FromBody] LoginViewModel payload)
+        {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest("Please, provide all required fields");
+            }
+
+            var user = await _userManager.FindByEmailAsync(payload.Email);
+            if (user != null && await _userManager.CheckPasswordAsync(user, payload.Password))
+            {
+                var tokenValue = await GenerateJwtToken(user);
+
+                return Ok(tokenValue);
+            }
+            return Unauthorized();
         }
 
         private async Task<AuthResultViewModel> GenerateJwtToken(ApplicationUser user)
