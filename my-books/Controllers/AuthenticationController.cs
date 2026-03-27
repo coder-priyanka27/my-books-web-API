@@ -1,9 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using my_books.Data;
 using my_books.Data.Models;
 using my_books.Data.ViewModels.Authentication;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace my_books.Controllers
 {
@@ -48,6 +52,52 @@ namespace my_books.Controllers
                 return BadRequest("User Could not be created");
             }
             return Created(nameof(Register), $"User {payload.Email} Created");
+        }
+
+        private async Task<AuthResultViewModel> GenerateJwtToken(ApplicationUser user)
+        {
+           var authClaims = new List<Claim>
+           {
+               new Claim(ClaimTypes.Name, user.UserName),
+               new Claim(ClaimTypes.NameIdentifier, user.Id),
+               new Claim(JwtRegisteredClaimNames.Email, user.Email),
+               new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+               new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+           };
+
+            var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]));
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JWT:Issuer"],
+                audience: _configuration["JWT:Audience"],
+                expires: DateTime.UtcNow.AddMinutes(2),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                );
+
+            var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            var refreshToken = new RefreshToken()
+            {
+                JwtId = token.Id,
+                IsRevoked = false,
+                UserId = user.Id,
+                DateAdded = DateTime.UtcNow,
+                DateExpire = DateTime.UtcNow.AddMonths(6),
+                Token = Guid.NewGuid().ToString() + Guid.NewGuid().ToString()
+            };
+
+            await _context.RefreshTokens.AddAsync(refreshToken);
+            await _context.SaveChangesAsync();
+
+            var response = new AuthResultViewModel()
+            {
+                Token = jwtToken,
+                RefreshToken = refreshToken.Token,
+                ExpiresAt = token.ValidTo
+            };
+
+            return response;
         }
     }
 }

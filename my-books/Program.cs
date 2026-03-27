@@ -7,24 +7,13 @@ using my_books.Data;
 using my_books.Data.Models;
 using my_books.Data.Services;
 using Serilog;
-using System.Configuration;
 using System.Text;
+using Log = Serilog.Log;
 
 var builder = WebApplication.CreateBuilder(args);
-try
-{
-    var configuration = new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
-        .Build();
-    Serilog.Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger();
 
-    //Log.Logger = new LoggerConfiguration().WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day).CreateLogger();
-}
-finally
-{
-    Serilog.Log.CloseAndFlush();
-}
-Serilog.Log.Logger = new LoggerConfiguration()
+// Proper Serilog configuration
+Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
     .CreateLogger();
@@ -98,6 +87,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Exception Handling

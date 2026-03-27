@@ -26,5 +26,7 @@ namespace my_books.Data
         public DbSet<Book_Author> Book_Authors { get; set; }
         public DbSet<Publisher> Publishers { get; set; }
         public DbSet<Log> Logs { get; set; }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }
