@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using my_books.Data;
 using my_books.Data.Models;
@@ -20,12 +22,15 @@ namespace my_books.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
 
-        public AuthenticationController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context, IConfiguration configuration)
+        // Refresh token
+        private readonly TokenValidationParameters _tokenValidationParameters;
+        public AuthenticationController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context, IConfiguration configuration, TokenValidationParameters tokenValidationParameters)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
             _configuration = configuration;
+            _tokenValidationParameters = tokenValidationParameters;
         }
 
         [HttpPost("register-user")]
@@ -52,7 +57,7 @@ namespace my_books.Controllers
 
             var result = await _userManager.CreateAsync(user, payload.Password);
 
-            if (!result.Succeeded) 
+            if (!result.Succeeded)
             {
                 return BadRequest("User Could not be created");
             }
@@ -62,7 +67,7 @@ namespace my_books.Controllers
         [HttpPost("login-user")]
         public async Task<IActionResult> Login([FromBody] LoginViewModel payload)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest("Please, provide all required fields");
             }
@@ -70,16 +75,103 @@ namespace my_books.Controllers
             var user = await _userManager.FindByEmailAsync(payload.Email);
             if (user != null && await _userManager.CheckPasswordAsync(user, payload.Password))
             {
-                var tokenValue = await GenerateJwtToken(user);
+                var tokenValue = await GenerateJwtTokenAsync(user, "");
 
                 return Ok(tokenValue);
             }
             return Unauthorized();
         }
 
-        private async Task<AuthResultViewModel> GenerateJwtToken(ApplicationUser user)
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] TokenRequestViewModel payload)
         {
-           var authClaims = new List<Claim>
+            try
+            {
+                var result = await VerifyAndGenerateTokenAsync(payload);
+
+                if (result == null)
+                {
+                    return BadRequest("Invalid tokens");
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        private async Task<AuthResultViewModel> VerifyAndGenerateTokenAsync(TokenRequestViewModel payload)
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                var tokenInVerification = jwtTokenHandler.ValidateToken(payload.Token, _tokenValidationParameters, out var validatedToken);
+
+                if (validatedToken is JwtSecurityToken jwtSecurityToken)
+                {
+                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+
+                    if (result == false)
+                    {
+                        return null;
+                    }
+
+                    var utcExpiryDate = long.Parse(tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+                    var expiryDate = UnixTimeStampToDateTimeInUtc(utcExpiryDate);
+
+                    if (expiryDate > DateTime.UtcNow)
+                    {
+                        throw new Exception("Access token is still valid");
+                    }
+
+                    var dbRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == payload.RefreshToken);
+
+                    if (dbRefreshToken == null)
+                    {
+                        throw new Exception("Refresh token does not exist in DB");
+                    }
+
+                    var jti = tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+
+                    if (dbRefreshToken.JwtId != jti)
+                    {
+                        throw new Exception("Refresh token does not match");
+                    }
+
+                    if (dbRefreshToken.DateExpire <= DateTime.UtcNow)
+                    {
+                        throw new Exception("Refresh token expired");
+                    }
+
+                    if (dbRefreshToken.IsRevoked)
+                    {
+                        throw new Exception("Refresh token revoked");
+                    }
+
+                    var user = await _userManager.FindByIdAsync(dbRefreshToken.UserId);
+
+                    return await GenerateJwtTokenAsync(user, payload.RefreshToken);
+                }
+                return null;
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                var dbRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == payload.RefreshToken);
+                var user = await _userManager.FindByIdAsync(dbRefreshToken.UserId);
+
+                return await GenerateJwtTokenAsync(user, payload.RefreshToken);
+            }
+            catch(Exception ex) 
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        private async Task<AuthResultViewModel> GenerateJwtTokenAsync(ApplicationUser user,  string existingRefreshToken)
+        {
+            var authClaims = new List<Claim>
            {
                new Claim(ClaimTypes.Name, user.UserName),
                new Claim(ClaimTypes.NameIdentifier, user.Id),
@@ -99,28 +191,36 @@ namespace my_books.Controllers
                 );
 
             var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-            var refreshToken = new RefreshToken()
+            var refreshToken = new RefreshToken();
+            if (string.IsNullOrEmpty(existingRefreshToken))
             {
-                JwtId = token.Id,
-                IsRevoked = false,
-                UserId = user.Id,
-                DateAdded = DateTime.UtcNow,
-                DateExpire = DateTime.UtcNow.AddMonths(6),
-                Token = Guid.NewGuid().ToString() + Guid.NewGuid().ToString()
-            };
+                refreshToken = new RefreshToken()
+                {
+                    JwtId = token.Id,
+                    IsRevoked = false,
+                    UserId = user.Id,
+                    DateAdded = DateTime.UtcNow,
+                    DateExpire = DateTime.UtcNow.AddMonths(6),
+                    Token = Guid.NewGuid().ToString() + Guid.NewGuid().ToString()
+                };
 
-            await _context.RefreshTokens.AddAsync(refreshToken);
-            await _context.SaveChangesAsync();
-
-            var response = new AuthResultViewModel()
+                await _context.RefreshTokens.AddAsync(refreshToken);
+                await _context.SaveChangesAsync();
+            }
+                var response = new AuthResultViewModel()
             {
                 Token = jwtToken,
-                RefreshToken = refreshToken.Token,
+                RefreshToken = (string.IsNullOrEmpty(existingRefreshToken)) ? refreshToken.Token : existingRefreshToken,
                 ExpiresAt = token.ValidTo
             };
 
             return response;
+        }
+
+        private DateTime UnixTimeStampToDateTimeInUtc(long unixTimeStamp)
+        {
+            var dateTimeVal = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixTimeStamp);
+            return dateTimeVal;
         }
     }
 }

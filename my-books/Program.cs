@@ -48,6 +48,22 @@ builder.Services.AddSwaggerGen();
 // Access configuration
 var _configuration = builder.Configuration;
 
+//Token Validation Parameters
+var tokenValidationParameters = new TokenValidationParameters()
+{
+    ValidateIssuerSigningKey = true,
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"])),
+    ValidateIssuer = true,
+    ValidIssuer = _configuration["JWT:Issuer"],
+    ValidateAudience = true,
+    ValidAudience = _configuration["JWT:Audience"],
+
+    ValidateLifetime = true,
+    ClockSkew = TimeSpan.Zero
+};
+
+builder.Services.AddSingleton(tokenValidationParameters);
+
 //Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
@@ -65,15 +81,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
-    options.TokenValidationParameters = new TokenValidationParameters()
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"])),
-        ValidateIssuer = true,
-        ValidIssuer = _configuration["JWT:Issuer"],
-        ValidateAudience = true,
-        ValidAudience = _configuration["JWT:Audience"],
-    };
+    options.TokenValidationParameters = tokenValidationParameters;
 });
 
 var app = builder.Build();
