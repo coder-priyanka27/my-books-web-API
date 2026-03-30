@@ -108,5 +108,6 @@ app.Logger.LogInformation("Application Started Successfully");
 app.MapControllers();
 
 //AppDbInitializer.Seed(app);
+AppDbInitializer.SeedRoles(app).Wait();
 
 app.Run();
